@@ -313,8 +313,6 @@ def process_images(input_patterns, output_dir="output",
         else:
             if os.path.exists(pattern):
                 image_files.append(pattern)
-            else:
-                print(f"警告: 未找到文件 '{pattern}'")
     
     if not image_files:
         print("错误: 没有找到要处理的图片文件")
@@ -425,22 +423,45 @@ if __name__ == "__main__":
         )
     else:
         print("=" * 60)
-        print("图片边框水印工具 - 合并版")
+        print("图片边框水印工具")
         print("=" * 60)
-        print("\n使用方法:")
-        print("\n1. 虚化边框模式(默认):")
-        print("   python main_merged.py image.jpg")
-        print("   python main_merged.py *.jpg")
-        print("\n2. 白色底框模式:")
-        print("   python main_merged.py --style white image.jpg")
-        print("   python main_merged.py --style white *.jpg")
-        print("\n3. 指定输出目录:")
-        print("   python main_merged.py --output my_output image.jpg")
-        print("\n4. 组合使用:")
-        print("   python main_merged.py --style white --output my_output *.jpg")
-        print("\n参数说明:")
-        print("  --style  : 边框样式，blur(虚化边框)或 white(白色底框)，默认blur")
-        print("  --output : 输出目录，默认为 output")
-        print("  --corner : 圆角大小(仅blur模式)，默认30")
-        print("  --shadow : 阴影偏移(仅blur模式)，默认8")
-        print("=" * 60)
+        
+        # 询问用户选择样式
+        print("\n请选择边框样式:")
+        print("1. blur  - 虚化边框(四周模糊效果)")
+        print("2. white - 白色底框(底部白色边框)")
+        style_choice = input("\n请输入选项 (1 或 2，默认为 1): ").strip()
+        
+        if style_choice == '2':
+            border_style = 'white'
+        else:
+            border_style = 'blur'
+        
+        print(f"\n已选择: {border_style} 模式")
+        
+        # 自动处理当前目录下的所有图片文件
+        print("\n正在搜索当前目录下的图片文件...")
+        image_extensions = ['*.jpg', '*.jpeg', '*.png']
+        image_input = image_extensions
+        
+        # 询问输出目录
+        output_input = input(f"\n输出目录 (默认为 output，如果没有会自动创建，直接回车使用默认): ").strip()
+        if output_input:
+            output_dir = output_input
+        
+        print(f"\n开始处理图片...")
+        print(f"边框样式: {border_style}")
+        print(f"输出目录: {output_dir}\n")
+        
+        process_images(
+            image_input,
+            output_dir=output_dir,
+            border_style=border_style,
+            corner_radius=corner_radius,
+            shadow_offset=shadow_offset,
+            shadow_blur=shadow_blur,
+            shadow_opacity=shadow_opacity
+        )
+    
+    # 等待用户输入,防止窗口关闭
+    input("\n按回车键退出...")
