@@ -1,1 +1,1 @@
-python main2.py *.jpg
+python main.py --style white *.jpg
