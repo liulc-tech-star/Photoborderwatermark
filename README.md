@@ -1,119 +1,106 @@
 # Photoborderwatermark
 
-A Python tool for adding borders and watermarks to photos with EXIF metadata information.
+一个用于给照片添加边框并在底部显示 EXIF 信息（相机品牌、参数等）的 Python 小工具。
 
-## 📋 Description
+## 简介
 
-Photoborderwatermark is a Python utility that reads EXIF data from your photos and adds professional-looking borders with embedded camera information. Perfect for photographers who want to showcase their camera settings and equipment details directly on their images.
+此工具会从照片中读取 EXIF 元数据（如相机品牌、机型、镜头、焦距、光圈、快门、ISO、拍摄时间），并把这些信息以艺术化的方式添加到底部白框或虚化边框上，支持批量处理。
 
-## ✨ Features
+## 主要功能
 
-- **EXIF Data Extraction**: Automatically extracts camera metadata from photos
-- **Smart Formatting**: Displays camera brand, model, lens, and shooting parameters
-- **Parameter Display**: Shows focal length, aperture (F-number), shutter speed, ISO, and capture date
-- **GPS Support**: Handles GPS information if available in EXIF data
-- **Batch Processing**: Process multiple images at once
-- **Error Handling**: Gracefully handles missing or incomplete EXIF data
+- 自动读取并格式化 EXIF 信息（品牌、型号、镜头、参数、拍摄时间）
+- 两种边框样式：虚化四周背景（默认）或底部白色信息条
+- 支持圆角和阴影（虚化模式）以增强视觉效果
+- 批量处理（支持通配符如 *.jpg）
+- 对缺失或不完整的 EXIF 做容错处理，使用默认占位文本
 
-## 🛠️ Technology Stack
+## 依赖
 
-- **Python**: 99.9%
-- **Batch Scripts**: 0.1%
+需要安装 Pillow（PIL）：
 
-## 📦 Dependencies
-
-```python
-from PIL import Image, ImageFilter, ImageDraw, ImageFont
-```
-
-Required packages:
-- Pillow (PIL)
-
-Install dependencies:
-```bash
+```powershell
 pip install Pillow
 ```
 
-## 🚀 Usage
+## 仓库中的脚本
 
-### Basic Usage
-
-Run the script with image files:
-
-```bash
-python main2.py image1.jpg image2.jpg
-```
-
-### Batch Processing
-
-Use the provided batch file to process all JPG files in a directory:
-
-```bash
-compile.bat
-```
-
-Or manually:
-```bash
-python main2.py *.jpg
-```
-
-## 📸 EXIF Information Handled
-
-The tool extracts and displays the following information:
-- **Camera Brand** (Make)
-- **Camera Model**
-- **Lens Model**
-- **Focal Length** (mm)
-- **Aperture** (F-number)
-- **Shutter Speed** (exposure time)
-- **ISO Sensitivity**
-- **Capture Date & Time**
-- **GPS Data** (if available)
-
-## 📁 Project Structure
+当前仓库主要脚本：
 
 ```
 Photoborderwatermark/
-├── main1.py          # Version 1 of the watermark tool
-├── main2.py          # Version 2 of the watermark tool (latest)
-├── compile.bat       # Batch processing script for Windows
-└── README.md         # This file
+├── main.py           # 主脚本（包含命令行参数，用于处理图片）
+├── main_merged.py    # 合并版脚本（功能相同/类似，可作为参考）
+├── compile.bat       # Windows 批处理示例（可用于批量调用脚本）
+├── output/           # 默认输出目录（处理后图片保存位置）
+└── README.md         # 本文件
 ```
 
-## 💡 Example Output
+说明：仓库中存在 `main.py` 和 `main_merged.py` 两个实现，通常直接运行 `main.py` 即可（两者功能基本一致，命令行参数相同）。
 
-The tool will format EXIF data into a readable format, such as:
-- Brand: Canon
-- Model: EOS R5
-- Lens: RF 24-70mm F2.8L IS USM
-- Parameters: 50mm, F2.8, 1/500s, ISO 200
-- Date: 2025-11-03 15:44:46
+## 使用方法（示例）
 
-## ⚠️ Error Handling
+1) 对单张图片使用虚化边框（默认）：
 
-If EXIF data is missing or incomplete, the tool will display default values:
-- "未知品牌" (Unknown Brand)
-- "未知型号" (Unknown Model)
-- "未知镜头" (Unknown Lens)
-- "参数未知" (Unknown Parameters)
+```powershell
+python main.py photo.jpg
+```
 
-## 🤝 Contributing
+2) 对多张图片批量处理（当前目录下所有 JPG）：
 
-Contributions, issues, and feature requests are welcome!
+```powershell
+python main.py *.jpg
+```
 
-## 📝 License
+3) 使用白色底框（底部信息条）并指定输出目录：
 
-This project is open source and available under standard licensing terms.
+```powershell
+python main.py --style white --output my_output photo.jpg
+```
 
-## 👤 Author
+4) 可选参数说明：
 
-**liulc-tech-star**
-- GitHub: [@liulc-tech-star](https://github.com/liulc-tech-star)
+- `--style` : 边框样式，`blur`（虚化）或 `white`（底部白框），默认 `blur`
+- `--output`: 输出目录，默认 `output`
+- `--corner`: 圆角半径（仅 `blur` 模式生效），例如 `--corner 30`
+- `--shadow`: 阴影偏移（仅 `blur` 模式生效），例如 `--shadow 8`
 
-## 🔗 Repository
+示例（组合）：
 
-[https://github.com/liulc-tech-star/Photoborderwatermark](https://github.com/liulc-tech-star/Photoborderwatermark)
+```powershell
+python main.py --style blur --corner 40 --shadow 10 --output output *.jpg
+```
+
+## EXIF 信息（程序会尝试提取）
+
+- 相机品牌（Make）
+- 相机型号（Model）
+- 镜头信息（LensModel / Lens）
+- 焦距（FocalLength）
+- 光圈（FNumber）
+- 快门（ExposureTime）
+- ISO（ISOSpeedRatings）
+- 拍摄时间（DateTimeOriginal / DateTimeDigitized）
+- GPS（如可用）
+
+当 EXIF 缺失或字段不完整时，工具会使用中文占位文本（例如 “未知品牌”、“未知型号” 等）。
+
+## 使用建议与注意事项
+
+- Windows 系统下脚本默认使用系统字体路径（示例中使用 `C:\Windows\Fonts\arial.ttf`），若系统中没有该字体或路径不同，请在脚本中修改为可用字体路径。
+- 处理大尺寸图片时内存占用会较高，必要时先缩小图片或在更大内存的机器上运行。
+
+## 运行验证（本地）
+
+可按上面的示例命令运行脚本，处理成功后将在 `output`（或 `--output` 指定目录）中看到新增的文件，文件名通常在原名后加了样式后缀（如 `_blur` 或 `_white`）。
+
+## 贡献与许可
+
+欢迎提交问题和合并请求。项目为开源，可根据需要在仓库中添加 LICENSE 文件以明确许可条款。
+
+## 作者
+
+liulc-tech-star
 
 ---
 
-*Made with ❤️ for photographers who love to share their camera settings*
+如需我将 README 也保留英文版或添加更多示例（例如处理 PNG、保存质量参数、CI 集成），告诉我我会再补充。
