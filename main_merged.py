@@ -15,12 +15,12 @@ def get_exif_data(image_path):
             if not exif:
                 return None  # 无EXIF信息
             
-            # 解析EXIF标签（将数字标签转换为可读名称）
+            # 解析EXIF标签(将数字标签转换为可读名称)
             for tag_id, value in exif.items():
                 tag = TAGS.get(tag_id, tag_id)
                 exif_data[tag] = value
             
-            # 特殊处理GPS信息（如果有的话）
+            # 特殊处理GPS信息(如果有的话)
             if 'GPSInfo' in exif_data:
                 gps_info = {}
                 for key in exif_data['GPSInfo']:
@@ -43,16 +43,16 @@ def format_exif_params(exif_data):
             "datetime": "拍摄时间未知"
         }
     
-    # 提取相机品牌（去除可能的空格）
+    # 提取相机品牌(去除可能的空格)
     brand = exif_data.get("Make", "未知品牌").strip()
     
     # 提取相机型号
     model = exif_data.get("Model", "未知型号").strip()
     
-    # 提取镜头型号（不同相机厂商标签可能不同，这里兼容常见标签）
+    # 提取镜头型号(不同相机厂商标签可能不同，这里兼容常见标签)
     lens = exif_data.get("LensModel", exif_data.get("Lens", "未知镜头")).strip()
     
-    # 提取焦距（单位：mm）- 显示为整数
+    # 提取焦距(单位:mm)- 显示为整数
     focal_length = exif_data.get("FocalLength")
     if focal_length:
         if isinstance(focal_length, tuple):
@@ -62,17 +62,17 @@ def format_exif_params(exif_data):
     else:
         focal_length = "未知焦距"
     
-    # 提取光圈值（F值）
+    # 提取光圈值(F值)
     f_number = exif_data.get("FNumber")
     if isinstance(f_number, tuple):
         f_number = f"F{f_number[0]/f_number[1]:.1f}"
     else:
         f_number = f"F{f_number}" if f_number else "未知光圈"
     
-    # 提取快门速度（单位：秒）
+    # 提取快门速度(单位:秒)
     exposure_time = exif_data.get("ExposureTime")
     if exposure_time:
-        # 转换为Fraction对象（兼容tuple和其他格式）
+        # 转换为Fraction对象(兼容tuple和其他格式)
         if isinstance(exposure_time, tuple):
             frac = fractions.Fraction(exposure_time[0], exposure_time[1])
         elif isinstance(exposure_time, fractions.Fraction):
@@ -82,10 +82,10 @@ def format_exif_params(exif_data):
         
         # 始终显示为分数格式
         if frac.numerator < frac.denominator:
-            # 小于1秒：显示为分数（如1/100s）
+            # 小于1秒:显示为分数(如1/100s)
             exposure_time = f"{frac.numerator}/{frac.denominator}"
         else:
-            # 大于等于1秒：也显示为分数（如2/1s 或直接显示秒数）
+            # 大于等于1秒:也显示为分数(如2/1s 或直接显示秒数)
             if frac.denominator == 1:
                 exposure_time = f"{frac.numerator}"
             else:
@@ -99,12 +99,12 @@ def format_exif_params(exif_data):
     # 合并拍摄参数文本
     params = f"{focal_length}  {f_number}  {exposure_time}  ISO{iso}"
     
-    # 提取拍摄时间（优先用原始时间，无则用修改时间）
+    # 提取拍摄时间(优先用原始时间，无则用修改时间)
     datetime_original = exif_data.get("DateTimeOriginal", "")
     datetime_digitized = exif_data.get("DateTimeDigitized", "")
     shoot_time = datetime_original or datetime_digitized
     if shoot_time:
-        # 格式化时间（如2025:10:31 22:40:15 → 2025.10.31 22:40:15）
+        # 格式化时间(如2025:10:31 22:40:15 → 2025.10.31 22:40:15)
         shoot_time = shoot_time.replace(":", ".", 2)
     else:
         shoot_time = "拍摄时间未知"
@@ -122,7 +122,7 @@ def add_rounded_corners(img, radius):
     # 创建一个圆角遮罩
     mask = Image.new('L', img.size, 0)
     draw = ImageDraw.Draw(mask)
-    # 绘制圆角矩形（白色区域为保留部分）
+    # 绘制圆角矩形(白色区域为保留部分)
     draw.rounded_rectangle([(0, 0), img.size], radius=radius, fill=255)
     
     # 创建输出图片
@@ -136,16 +136,16 @@ def add_shadow(img, shadow_offset=10, shadow_blur=15, shadow_opacity=128):
     """给图片添加阴影效果
     
     参数:
-        img: 输入图片（RGBA格式）
-        shadow_offset: 阴影偏移量（像素），默认10
-        shadow_blur: 阴影模糊半径（像素），默认15
-        shadow_opacity: 阴影不透明度（0-255），默认128（半透明）
+        img: 输入图片(RGBA格式)
+        shadow_offset: 阴影偏移量(像素)，默认10
+        shadow_blur: 阴影模糊半径(像素)，默认15
+        shadow_opacity: 阴影不透明度(0-255)，默认128(半透明)
     """
     # 创建足够大的画布来容纳阴影
     shadow_margin = shadow_blur + shadow_offset
     canvas_size = (img.width + shadow_margin * 2, img.height + shadow_margin * 2)
     
-    # 创建阴影层（黑色）
+    # 创建阴影层(黑色)
     shadow = Image.new('RGBA', canvas_size, (0, 0, 0, 0))
     shadow_draw = ImageDraw.Draw(shadow)
     
@@ -164,7 +164,7 @@ def add_shadow(img, shadow_offset=10, shadow_blur=15, shadow_opacity=128):
     return shadow
 
 def add_border_and_auto_text(image_path, output_path, 
-                             border_style='blur',  # 新增参数：'blur'=虚化边框, 'white'=白色底框
+                             border_style='blur',  # 新增参数:'blur'=虚化边框, 'white'=白色底框
                              corner_radius=30, 
                              shadow_offset=8, shadow_blur=20, shadow_opacity=100):
     """自动读取图片参数,添加边框和文字
@@ -172,11 +172,11 @@ def add_border_and_auto_text(image_path, output_path,
     参数:
         image_path: 输入图片路径
         output_path: 输出图片路径
-        border_style: 边框样式，'blur'=虚化边框（四周）, 'white'=白色底框（仅底部）
-        corner_radius: 圆角半径（像素），默认30。设为0则无圆角（仅blur模式有效）
-        shadow_offset: 阴影偏移量（像素），默认8。设为0则无阴影（仅blur模式有效）
-        shadow_blur: 阴影模糊半径（像素），默认20（仅blur模式有效）
-        shadow_opacity: 阴影不透明度（0-255），默认100（仅blur模式有效）
+        border_style: 边框样式，'blur'=虚化边框(四周), 'white'=白色底框(仅底部)
+        corner_radius: 圆角半径(像素)，默认30。设为0则无圆角(仅blur模式有效)
+        shadow_offset: 阴影偏移量(像素)，默认8。设为0则无阴影(仅blur模式有效)
+        shadow_blur: 阴影模糊半径(像素)，默认20(仅blur模式有效)
+        shadow_opacity: 阴影不透明度(0-255)，默认100(仅blur模式有效)
     """
     # 1. 读取并解析EXIF信息
     exif_data = get_exif_data(image_path)
@@ -200,7 +200,7 @@ def add_border_and_auto_text(image_path, output_path,
             # 创建白色背景画布
             background = Image.new('RGB', (new_width, new_height), (255, 255, 255))
             
-            # 将原图直接粘贴到白色背景上（顶部对齐，无圆角和阴影）
+            # 将原图直接粘贴到白色背景上(顶部对齐，无圆角和阴影)
             new_img = background
             new_img.paste(img, (0, 0))  # 左上角对齐粘贴
             
@@ -216,7 +216,7 @@ def add_border_and_auto_text(image_path, output_path,
             background = img.copy()
             background = background.resize((new_width, new_height), Image.Resampling.LANCZOS)
             
-            # 对背景进行高斯模糊（虚化效果）
+            # 对背景进行高斯模糊(虚化效果)
             blur_radius = max(20, border_width // 3)
             background = background.filter(ImageFilter.GaussianBlur(radius=blur_radius))
             
@@ -259,7 +259,7 @@ def add_border_and_auto_text(image_path, output_path,
         text_x_position = new_width // 2
         text_y_position = new_height - border_width // 2
         
-        # 底部居中：第一行品牌+型号，第二行参数
+        # 底部居中:第一行品牌+型号，第二行参数
         bottom_text = f"{params['brand']} {params['model']}\n{params['params']}"
         
         draw.text(
@@ -272,7 +272,7 @@ def add_border_and_auto_text(image_path, output_path,
             spacing=15
         )
         
-        # 5. 保存图片（高质量）
+        # 5. 保存图片(高质量)
         file_ext = os.path.splitext(output_path)[1].lower()
         if file_ext in ['.jpg', '.jpeg']:
             new_img.save(output_path, quality=95, subsampling=0)
@@ -290,7 +290,7 @@ def process_images(input_patterns, output_dir="output",
     """批量处理图片
     
     参数:
-        input_patterns: 输入图片路径或通配符模式（可以是单个文件或列表）
+        input_patterns: 输入图片路径或通配符模式(可以是单个文件或列表)
         output_dir: 输出目录，默认为"output"
         border_style: 边框样式，'blur'=虚化边框, 'white'=白色底框
         其他参数同add_border_and_auto_text
@@ -330,7 +330,7 @@ def process_images(input_patterns, output_dir="output",
             name_without_ext = os.path.splitext(filename)[0]
             ext = os.path.splitext(filename)[1]
             
-            # 生成输出文件名（添加边框样式后缀）
+            # 生成输出文件名(添加边框样式后缀)
             output_filename = f"{name_without_ext}_{border_style}{ext}"
             output_path = os.path.join(output_dir, output_filename)
             
@@ -360,25 +360,25 @@ if __name__ == "__main__":
     """
     使用说明:
     
-    1. 虚化边框模式（默认）：
+    1. 虚化边框模式(默认):
        python main_merged.py image.jpg
        python main_merged.py *.jpg
     
-    2. 白色底框模式：
+    2. 白色底框模式:
        python main_merged.py --style white image.jpg
        python main_merged.py --style white *.jpg
     
-    3. 指定输出目录：
+    3. 指定输出目录:
        python main_merged.py --output my_output image.jpg
     
-    4. 组合使用：
+    4. 组合使用:
        python main_merged.py --style white --output my_output *.jpg
     
-    参数说明：
-    --style: 边框样式，blur（虚化边框）或 white（白色底框），默认blur
+    参数说明:
+    --style: 边框样式，blur(虚化边框)或 white(白色底框)，默认blur
     --output: 输出目录，默认为 output
-    --corner: 圆角大小（仅blur模式），默认30
-    --shadow: 阴影偏移（仅blur模式），默认8
+    --corner: 圆角大小(仅blur模式)，默认30
+    --shadow: 阴影偏移(仅blur模式)，默认8
     """
     
     # 解析命令行参数
@@ -428,19 +428,19 @@ if __name__ == "__main__":
         print("图片边框水印工具 - 合并版")
         print("=" * 60)
         print("\n使用方法:")
-        print("\n1. 虚化边框模式（默认）：")
+        print("\n1. 虚化边框模式(默认):")
         print("   python main_merged.py image.jpg")
         print("   python main_merged.py *.jpg")
-        print("\n2. 白色底框模式：")
+        print("\n2. 白色底框模式:")
         print("   python main_merged.py --style white image.jpg")
         print("   python main_merged.py --style white *.jpg")
-        print("\n3. 指定输出目录：")
+        print("\n3. 指定输出目录:")
         print("   python main_merged.py --output my_output image.jpg")
-        print("\n4. 组合使用：")
+        print("\n4. 组合使用:")
         print("   python main_merged.py --style white --output my_output *.jpg")
-        print("\n参数说明：")
-        print("  --style  : 边框样式，blur（虚化边框）或 white（白色底框），默认blur")
+        print("\n参数说明:")
+        print("  --style  : 边框样式，blur(虚化边框)或 white(白色底框)，默认blur")
         print("  --output : 输出目录，默认为 output")
-        print("  --corner : 圆角大小（仅blur模式），默认30")
-        print("  --shadow : 阴影偏移（仅blur模式），默认8")
+        print("  --corner : 圆角大小(仅blur模式)，默认30")
+        print("  --shadow : 阴影偏移(仅blur模式)，默认8")
         print("=" * 60)
