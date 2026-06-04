@@ -5,7 +5,7 @@ from __future__ import annotations
 import fractions
 import glob
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Callable, Iterable, List, Optional
 
@@ -257,11 +257,15 @@ def _draw_centered_text(
     start_size: int,
     spacing: int,
     shadow_opacity: int,
+    absolute_scale: float = 1.0,
 ) -> None:
     draw = ImageDraw.Draw(image)
     left, top, right, bottom = box
-    max_width = max(1, right - left - 32)
-    max_height = max(1, bottom - top - 18)
+    horizontal_padding = _scale_pixel_value(32, absolute_scale)
+    vertical_padding = _scale_pixel_value(18, absolute_scale)
+    shadow_shift = _scale_pixel_value(2, absolute_scale, minimum=1)
+    max_width = max(1, right - left - horizontal_padding)
+    max_height = max(1, bottom - top - vertical_padding)
     font = _fit_font(draw, text, start_size, max_width, max_height, spacing)
     center = ((left + right) // 2, (top + bottom) // 2)
 
@@ -270,7 +274,7 @@ def _draw_centered_text(
     overlay_draw = ImageDraw.Draw(overlay)
     if shadow_opacity > 0:
         overlay_draw.multiline_text(
-            (center[0] + 2, center[1] + 2),
+            (center[0] + shadow_shift, center[1] + shadow_shift),
             text,
             font=font,
             fill=(0, 0, 0, shadow_opacity),
@@ -310,17 +314,37 @@ def _normalized_options(options: RenderOptions) -> RenderOptions:
     return options
 
 
+def _scale_pixel_value(value: int, scale: float, minimum: int = 0) -> int:
+    return max(minimum, int(round(value * scale)))
+
+
+def _scaled_preview_options(options: RenderOptions, scale: float) -> RenderOptions:
+    scale = min(1.0, max(0.01, scale))
+    return replace(
+        options,
+        corner_radius=_scale_pixel_value(options.corner_radius, scale),
+        shadow_offset=_scale_pixel_value(options.shadow_offset, scale),
+        shadow_blur=_scale_pixel_value(options.shadow_blur, scale),
+        blur_radius=_scale_pixel_value(options.blur_radius, scale),
+        text_spacing=_scale_pixel_value(options.text_spacing, scale),
+    )
+
+
 def build_framed_image(
     source_image: Image.Image,
     params: dict,
     options: RenderOptions,
+    absolute_scale: float = 1.0,
 ) -> Image.Image:
     """Create the framed/watermarked image without saving it."""
     options = _normalized_options(options)
+    absolute_scale = min(1.0, max(0.01, absolute_scale))
     img = source_image.convert("RGB")
     width, height = img.size
-    border_width = max(28, int(min(width, height) * options.border_ratio))
-    font_size = max(18, int(border_width * options.font_scale))
+    min_border_width = _scale_pixel_value(28, absolute_scale, minimum=1)
+    min_font_size = _scale_pixel_value(18, absolute_scale, minimum=1)
+    border_width = max(min_border_width, int(min(width, height) * options.border_ratio))
+    font_size = max(min_font_size, int(border_width * options.font_scale))
     bottom_text = _text_lines(params, options)
 
     if options.border_style == "white":
@@ -336,20 +360,23 @@ def build_framed_image(
             start_size=font_size,
             spacing=options.text_spacing,
             shadow_opacity=0,
+            absolute_scale=absolute_scale,
         )
         return new_img
 
     new_width = width + border_width * 2
     new_height = height + border_width * 2
-    blur_radius = options.blur_radius or max(20, border_width // 3)
+    auto_blur_floor = _scale_pixel_value(20, absolute_scale, minimum=1)
+    blur_radius = options.blur_radius or max(auto_blur_floor, border_width // 3)
     background = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
     background = background.filter(ImageFilter.GaussianBlur(radius=blur_radius)).convert("RGBA")
 
     if options.caption_backdrop_opacity:
         shade = Image.new("RGBA", (new_width, new_height), (0, 0, 0, 0))
         shade_draw = ImageDraw.Draw(shade)
+        shade_margin = _scale_pixel_value(8, absolute_scale)
         shade_draw.rectangle(
-            (0, new_height - border_width - 8, new_width, new_height),
+            (0, new_height - border_width - shade_margin, new_width, new_height),
             fill=(0, 0, 0, options.caption_backdrop_opacity),
         )
         background = Image.alpha_composite(background, shade)
@@ -403,6 +430,7 @@ def build_framed_image(
         start_size=font_size,
         spacing=options.text_spacing,
         shadow_opacity=options.text_shadow_opacity,
+        absolute_scale=absolute_scale,
     )
     return new_img
 
@@ -441,8 +469,11 @@ def render_preview(
     params = format_exif_params(get_exif_data(image_path))
     with Image.open(image_path) as img:
         img = ImageOps.exif_transpose(img)
+        original_width, original_height = img.size
         img.thumbnail((max_source_side, max_source_side), Image.Resampling.LANCZOS)
-        return build_framed_image(img.copy(), params, options)
+        scale = min(img.width / original_width, img.height / original_height)
+        preview_options = _scaled_preview_options(options, scale)
+        return build_framed_image(img.copy(), params, preview_options, absolute_scale=scale)
 
 
 def collect_images(patterns: Iterable[str]) -> List[Path]:
