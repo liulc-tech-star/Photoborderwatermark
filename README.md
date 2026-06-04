@@ -1,210 +1,140 @@
-# Photoborderwatermark
+# Photo Border Watermark Studio
 
-一个用于给照片添加边框并在底部显示 EXIF 信息（相机品牌、参数等）的 Python 小工具。支持交互式和命令行两种使用方式。
-
-## 简介
-
-此工具会从照片中读取 EXIF 元数据（如相机品牌、机型、镜头、焦距、光圈、快门、ISO、拍摄时间），并把这些信息以艺术化的方式添加到底部白框或虚化边框上，支持批量处理。
+一个给照片添加边框和 EXIF 参数水印的小工具。现在支持桌面控制台和命令行两种方式：双击新版 exe 可以打开可视化控制台，选择照片、预览效果、调整参数并批量导出。
 
 ## 主要功能
 
-- **自动读取并格式化 EXIF 信息**（品牌、型号、镜头、焦距、光圈、快门、ISO、拍摄时间）
-- **两种边框样式**：
-  - `blur` - 虚化四周背景（默认），带圆角和阴影效果
-  - `white` - 底部白色信息条，简洁清晰
-- **交互式界面**：双击运行自动进入交互式模式，按提示选择样式和输出目录
-- **批量处理**：自动搜索并处理当前目录下所有图片（支持 jpg、jpeg、png 格式）
-- **容错处理**：对缺失或不完整的 EXIF 使用默认占位文本（如"未知品牌"）
-- **高质量输出**：JPG 使用 95% 质量，PNG 使用低压缩，保留最佳画质
-- **智能自适应**：边框宽度和字体大小根据图片尺寸自动计算
-
-## 安装与依赖
-
-### 安装依赖
-
-需要安装 Pillow（PIL）库：
-
-```powershell
-pip install Pillow
-```
-
-### 系统要求
-
-- Python 3.6+
-- Windows / macOS / Linux
-- 需要 Arial 字体（Windows 系统自带，其他系统需修改代码中的字体路径）
+- 自动读取 EXIF 信息：品牌、型号、镜头、焦距、光圈、快门、ISO、拍摄时间
+- 两种边框样式：
+  - `blur`：虚化背景边框，支持圆角、阴影、背景模糊强度
+  - `white`：底部白色信息条，清爽直接
+- 桌面控制台：
+  - 选择单张/多张照片或整个文件夹
+  - 选择输出目录
+  - 实时预览当前照片效果
+  - 可展开“外观参数”分组，调整边框比例、圆角弧度、阴影、背景虚化、文字阴影、底部底纹、JPG 质量
+  - 可展开“水印内容”分组，勾选品牌、机型、参数、镜头、拍摄时间、自定义标题/副标题，最终水印最多显示两行
+  - 可自定义标题和副标题
+- 命令行批处理：适合自动化和大批量处理
+- 高质量输出：JPG 默认 95 质量，PNG 低压缩
+- 自动处理 EXIF Orientation，竖图/横图方向会自动校正
 
 ## 文件结构
 
+```text
+PhotoBorderwatermark-main/
+├── main.py                         # 启动器：无参数打开控制台，有参数走命令行批处理
+├── photo_processor.py              # 图片处理核心
+├── studio_app.py                   # 桌面控制台界面
+├── dist/
+│   └── PhotoBorderWatermarkStudio.exe
+├── output/                         # 示例输出
+└── README.md
 ```
-Photoborderwatermark/
-├── main.py           # 主程序（支持交互式和命令行两种模式）
-├── output/           # 默认输出目录（处理后图片保存位置，不存在会自动创建）
-└── README.md         # 本文件
+
+## 快速使用
+
+### 双击控制台版 exe
+
+直接打开：
+
+```powershell
+dist\PhotoBorderWatermarkStudio.exe
 ```
 
-## 使用方法
+打开后可以在左侧选择照片、调参数，右侧会显示预览。点“开始处理”后，成品会保存到设置的输出目录。
 
-### 方式一：交互式模式（推荐新手使用）
-
-直接双击运行 `main.py` 或 `main.exe`，或在命令行中不带参数运行：
+### 用 Python 打开控制台
 
 ```powershell
 python main.py
 ```
 
-程序会引导你完成以下步骤：
-
-1. **选择边框样式**：
-   - 输入 `1` 选择虚化边框（四周模糊效果）
-   - 输入 `2` 选择白色底框（底部白色边框）
-   - 直接回车使用默认（虚化边框）
-
-2. **自动搜索图片**：程序自动搜索当前目录下所有 `.jpg`、`.jpeg`、`.png` 图片
-
-3. **指定输出目录**：
-   - 输入目录名（如 `my_output`）
-   - 直接回车使用默认 `output` 目录
-   - 目录不存在会自动创建
-
-4. **开始处理**：程序自动处理所有找到的图片并显示进度
-
-5. **按回车退出**：处理完成后按回车键关闭程序
-
-### 方式二：命令行模式（适合批处理和自动化）
-
-#### 基本用法
-
-1) 处理指定图片（默认虚化边框）：
+### 命令行批处理
 
 ```powershell
-python main.py photo.jpg
+python main.py DSC06840.JPG
+python main.py --style white --output output *.jpg
+python main.py --style blur --border 9 --corner 42 --shadow 10 --include-lens *.jpg
 ```
 
-2) 批量处理多张图片：
+常用参数：
+
+- `--style {blur,white}`：边框样式
+- `--output output`：输出目录
+- `--border 10`：边框比例，单位百分比
+- `--corner 34`：圆角大小
+- `--shadow 10`：阴影偏移
+- `--shadow-blur 22`：阴影模糊半径
+- `--shadow-opacity 110`：阴影深度
+- `--blur-radius 40`：背景虚化强度
+- `--font-scale 32`：文字大小比例，单位百分比
+- `--text-spacing 14`：水印文字行距
+- `--caption-backdrop 0`：水印底部底纹透明度，默认关闭
+- `--text-shadow 150`：文字阴影透明度
+- `--quality 95`：JPG 输出质量
+- `--hide-brand`：不显示品牌
+- `--hide-model`：不显示机型
+- `--hide-params`：不显示拍摄参数
+- `--include-lens`：显示镜头
+- `--include-datetime`：显示拍摄时间
+- `--hide-title`：不显示自定义标题
+- `--hide-subtitle`：不显示自定义副标题
+- `--title "自定义标题"`：自定义第一行文字
+- `--subtitle "自定义副标题"`：自定义第二行文字
+
+查看完整参数：
 
 ```powershell
-python main.py *.jpg
+python main.py --help
 ```
 
-3) 使用白色底框样式：
+## 安装依赖
+
+源码运行需要 Pillow：
 
 ```powershell
-python main.py --style white photo.jpg
+pip install Pillow
 ```
 
-4) 指定输出目录：
+桌面控制台使用 Python 标准库 `tkinter`，Windows Python 通常自带。
+
+## 重新打包 exe
 
 ```powershell
-python main.py --output my_output *.jpg
-```
-
-#### 命令行参数说明
-
-- `--style` : 边框样式，`blur`（虚化边框）或 `white`（白色底框），默认 `blur`
-- `--output`: 输出目录，默认 `output`（不存在会自动创建）
-- `--corner`: 圆角大小（仅 `blur` 模式有效），默认 `30`
-- `--shadow`: 阴影偏移（仅 `blur` 模式有效），默认 `8`
-
-#### 高级用法示例
-
-```powershell
-# 自定义圆角和阴影
-python main.py --style blur --corner 50 --shadow 15 *.jpg
-
-# 组合使用多个参数
-python main.py --style white --output processed *.jpg *.png
-```
-
-## EXIF 信息（程序会尝试提取）
-
-- 相机品牌（Make）
-- 相机型号（Model）
-- 镜头信息（LensModel / Lens）
-- 焦距（FocalLength）
-- 光圈（FNumber）
-- 快门（ExposureTime）
-- ISO（ISOSpeedRatings）
-- 拍摄时间（DateTimeOriginal / DateTimeDigitized）
-- GPS（如可用）
-
-当 EXIF 缺失或字段不完整时，工具会使用中文占位文本（例如 “未知品牌”、“未知型号” 等）。
-
-## 编译为 exe（可选）
-
-如果想编译成独立的 exe 文件方便分享使用，可以使用 PyInstaller：
-
-```powershell
-# 安装 PyInstaller
 pip install pyinstaller
-
-# 编译为单个 exe 文件
-pyinstaller --onefile --noconsole main.py
+python -m PyInstaller --onefile --windowed --name PhotoBorderWatermarkStudio main.py
 ```
 
-编译成功后会在 `dist` 目录生成 `main.exe`，可以直接双击使用，无需安装 Python。
+打包结果在：
+
+```text
+dist\PhotoBorderWatermarkStudio.exe
+```
 
 ## 输出说明
 
-- 处理后的图片保存在输出目录中（默认为 `output`）
-- 输出文件名格式：`原文件名_样式.扩展名`
-  - 例如：`photo_blur.jpg`（虚化边框）
-  - 例如：`photo_white.jpg`（白色底框）
-- 支持的输出格式：JPG/JPEG（高质量95）、PNG（低压缩）
+处理后的图片文件名格式：
 
-## 使用建议与注意事项
+```text
+原文件名_样式.扩展名
+```
 
-- **字体路径**：Windows 系统下默认使用 `C:\Windows\Fonts\arial.ttf`，其他系统需在代码中修改字体路径（第 223 行）
-- **内存占用**：处理大尺寸图片时内存占用较高，建议逐批处理
-- **图片方向**：程序会根据 EXIF 中的 Orientation 信息自动旋转图片到正确方向
-- **支持格式**：JPG、JPEG、PNG（程序会自动搜索这些格式）
-- **参数提取**：程序会尽可能从 EXIF 中提取相机参数，缺失时使用占位文本
-- **边框大小**：边框宽度自动根据图片尺寸计算（图片短边的 10%，最小 30px）
-- **文字大小**：字体大小自动根据边框宽度计算（边框宽度的 30%，最小 20px）
+例如：
 
-## 常见问题
+```text
+DSC06840_blur.JPG
+DSC06840_white.JPG
+```
 
-**Q: 为什么有些图片没有显示参数信息？**  
-A: 可能是图片没有 EXIF 信息（如截图、编辑过的图片）。程序会使用默认占位文本（如"未知品牌"、"参数未知"）。
+## 注意事项
 
-**Q: 可以处理哪些格式的图片？**  
-A: 目前支持 JPG、JPEG、PNG 格式。
-
-**Q: 输出目录在哪里？**  
-A: 默认在程序所在目录的 `output` 文件夹中，如果不存在会自动创建。
-
-**Q: 虚化边框和白色底框有什么区别？**  
-A: 虚化边框会在图片四周添加模糊效果的边框，支持圆角和阴影，更有艺术感；白色底框只在底部添加白色信息条，更简洁清晰。
-
-**Q: 可以自定义字体吗？**  
-A: 可以。修改代码中的字体路径（第 223 行）：`font = ImageFont.truetype('你的字体路径', font_size)`
-
-**Q: 处理大量图片时程序很慢怎么办？**  
-A: 这是正常的，因为图片处理需要较多计算。建议分批处理，或者降低图片分辨率。
-
-## 技术特性
-
-- **EXIF 解析**：使用 PIL.ExifTags 自动读取和解析照片元数据
-- **智能格式化**：自动处理分数格式的快门速度和光圈值
-- **自动旋转**：根据 EXIF Orientation 信息自动旋转图片到正确方向
-- **高斯模糊**：虚化边框使用高斯模糊算法，效果自然
-- **圆角处理**：使用遮罩实现圆角效果，支持自定义圆角大小
-- **阴影效果**：可自定义阴影偏移、模糊半径和不透明度
-- **高质量输出**：JPG 使用 95% 质量和无色度子采样，PNG 使用低压缩
-
-## 更新日志
-
-- **2025.11**: 
-  - 添加交互式模式，支持双击运行
-  - 自动搜索当前目录图片，无需手动输入路径
-  - 支持两种边框样式（虚化边框和白色底框）
-  - 添加圆角和阴影效果
-  - 优化用户体验，处理完成后等待用户确认
-  - 支持批量处理和命令行参数
-
-## 贡献与许可
-
-欢迎提交问题和合并请求。项目为开源，可根据需要在仓库中添加 LICENSE 文件以明确许可条款。
+- 当前支持 JPG、JPEG、PNG。
+- 大尺寸照片处理会占用较多内存，批量很多时建议分批处理。
+- 程序会优先使用 Windows 中文字体，找不到时会退回可用字体。
+- 虚化边框样式默认不再加底部深色底纹；需要时在“外观参数”里调高“底部底纹”即可。
+- 水印内容固定最多两行；勾选很多字段时会自动合并到两行里，并自动缩小字号适配宽度。
+- `dist\PhotoBorderWatermarkStudio.exe` 是新版控制台版；目录里的旧 `main.exe` 仍保留，没有覆盖。
 
 ## 作者
 
